@@ -69,7 +69,8 @@ cd national-contest-lookup
 docker-compose up --build
 ```
 
-**Lưu ý: SAU KHI CHẠY LỆNH DOCKER, 2 CONTAINER CỦA DATABASE VÀ SPRING SẼ ĐƯỢC TẠO, ĐỒNG THỜI DATA TỪ FILE CSV SẼ ĐƯỢC IMPORT VÀO MYSQL**
+**Lưu ý 1: SAU KHI CHẠY LỆNH DOCKER, 2 CONTAINER CỦA DATABASE VÀ SPRING SẼ ĐƯỢC TẠO, ĐỒNG THỜI DATA TỪ FILE CSV SẼ ĐƯỢC IMPORT VÀO MYSQL**
+**Lưu ý 2: NẾU CHẠY TEST FRONTEND Ở LOCAL, HÃY THAY ĐỔI URL CỦA FRONTEND TRONG FILE /src/main/config/WebConfig.java để tránh lỗi CORS**
 
 ### Environment Variables (Nếu chạy local không cần tạo file .env vì code đã thiết lập sẵn các giá trị mặc định)
 
