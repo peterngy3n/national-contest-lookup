@@ -11,11 +11,12 @@ import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
-import java.util.Arrays;
-import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 @Slf4j
 @Service
@@ -24,11 +25,80 @@ import java.util.stream.Collectors;
 public class ReportService {
     ScoreRepository scoreRepository;
 
-    @Cacheable(value = "allReportsCache", key = "'allReports'")
-    public List<ReportResponse> getAllSubjectsReport() {
-        List<Score> allScores = getAllScoresFromCache();
+//    @Cacheable(value = "allReportsCache", key = "'allReports'")
+//    public List<ReportResponse> getAllSubjectsReport() {
+//        List<Score> allScores = getAllScoresFromCache();
+//
+//        // Tạo array cho từng môn: [excellent, good, average, poor, total]
+//        int[] toanStats = new int[5];
+//        int[] nguvanStats = new int[5];
+//        int[] ngoainguStats = new int[5];
+//        int[] vatliStats = new int[5];
+//        int[] hoahocStats = new int[5];
+//        int[] sinhhocStats = new int[5];
+//        int[] lichsuStats = new int[5];
+//        int[] dialiStats = new int[5];
+//        int[] gdcdStats = new int[5];
+//
+//        // CHỈ 1 VÒNG LẶP DUY NHẤT - O(n) thay vì O(n×m)
+//        for (Score score : allScores) {
+//            // Tính trực tiếp cho từng môn - không cần switch case
+//            processSubjectScore(score.getToan(), toanStats);
+//            processSubjectScore(score.getNguVan(), nguvanStats);
+//            processSubjectScore(score.getNgoaiNgu(), ngoainguStats);
+//            processSubjectScore(score.getVatLi(), vatliStats);
+//            processSubjectScore(score.getHoaHoc(), hoahocStats);
+//            processSubjectScore(score.getSinhHoc(), sinhhocStats);
+//            processSubjectScore(score.getLichSu(), lichsuStats);
+//            processSubjectScore(score.getDiaLi(), dialiStats);
+//            processSubjectScore(score.getGdcd(), gdcdStats);
+//        }
+//
+//        // Tạo kết quả
+//        return Arrays.asList(
+//                createReportResponse("toan", toanStats),
+//                createReportResponse("nguvan", nguvanStats),
+//                createReportResponse("ngoaingu", ngoainguStats),
+//                createReportResponse("vatli", vatliStats),
+//                createReportResponse("hoahoc", hoahocStats),
+//                createReportResponse("sinhhoc", sinhhocStats),
+//                createReportResponse("lichsu", lichsuStats),
+//                createReportResponse("diali", dialiStats),
+//                createReportResponse("gdcd", gdcdStats)
+//        );
+//    }
+//
+//    @Cacheable(value = "allScoresCache", key = "'allScores'")
+//    public List<Score> getAllScoresFromCache() {
+//        return scoreRepository.findAll();
+//    }
+//
+//    private void processSubjectScore(BigDecimal subjectScore, int[] stats) {
+//        if (subjectScore != null) {
+//            stats[4]++; // total
+//            double point = subjectScore.doubleValue();
+//            if (point >= 8.0) stats[0]++;      // excellent
+//            else if (point >= 6.0) stats[1]++; // good
+//            else if (point >= 4.0) stats[2]++; // average
+//            else stats[3]++;                   // poor
+//        }
+//    }
+//
+//    private ReportResponse createReportResponse(String subject, int[] stats) {
+//        return ReportResponse.builder()
+//                .subject(subject)
+//                .lv4(stats[0])  // excellent
+//                .lv3(stats[1])  // good
+//                .lv2(stats[2])  // average
+//                .lv1(stats[3])  // poor
+//                .total(stats[4])
+//                .build();
+//    }
 
-        // Tạo array cho từng môn: [excellent, good, average, poor, total]
+    @Cacheable(value = "allReportsCache", key = "'allReports'")
+    @Transactional(readOnly = true)
+    public List<ReportResponse> getAllSubjectsReport() {
+        log.info("In report service");
         int[] toanStats = new int[5];
         int[] nguvanStats = new int[5];
         int[] ngoainguStats = new int[5];
@@ -39,21 +109,23 @@ public class ReportService {
         int[] dialiStats = new int[5];
         int[] gdcdStats = new int[5];
 
-        // CHỈ 1 VÒNG LẶP DUY NHẤT - O(n) thay vì O(n×m)
-        for (Score score : allScores) {
-            // Tính trực tiếp cho từng môn - không cần switch case
-            processSubjectScore(score.getToan(), toanStats);
-            processSubjectScore(score.getNguVan(), nguvanStats);
-            processSubjectScore(score.getNgoaiNgu(), ngoainguStats);
-            processSubjectScore(score.getVatLi(), vatliStats);
-            processSubjectScore(score.getHoaHoc(), hoahocStats);
-            processSubjectScore(score.getSinhHoc(), sinhhocStats);
-            processSubjectScore(score.getLichSu(), lichsuStats);
-            processSubjectScore(score.getDiaLi(), dialiStats);
-            processSubjectScore(score.getGdcd(), gdcdStats);
+        try (Stream<Score> stream = scoreRepository.streamAllScores()) {
+            stream.forEach(score -> {
+                processSubjectScore(score.getToan(), toanStats);
+                processSubjectScore(score.getNguVan(), nguvanStats);
+                processSubjectScore(score.getNgoaiNgu(), ngoainguStats);
+                processSubjectScore(score.getVatLi(), vatliStats);
+                processSubjectScore(score.getHoaHoc(), hoahocStats);
+                processSubjectScore(score.getSinhHoc(), sinhhocStats);
+                processSubjectScore(score.getLichSu(), lichsuStats);
+                processSubjectScore(score.getDiaLi(), dialiStats);
+                processSubjectScore(score.getGdcd(), gdcdStats);
+            });
         }
 
-        // Tạo kết quả
+        log.info("Processed in report service");
+
+
         return Arrays.asList(
                 createReportResponse("toan", toanStats),
                 createReportResponse("nguvan", nguvanStats),
@@ -67,54 +139,57 @@ public class ReportService {
         );
     }
 
-    @Cacheable(value = "allScoresCache", key = "'allScores'")
-    public List<Score> getAllScoresFromCache() {
-        return scoreRepository.findAll();
-    }
-
     private void processSubjectScore(BigDecimal subjectScore, int[] stats) {
         if (subjectScore != null) {
             stats[4]++; // total
             double point = subjectScore.doubleValue();
-            if (point >= 8.0) stats[0]++;      // excellent
-            else if (point >= 6.0) stats[1]++; // good
-            else if (point >= 4.0) stats[2]++; // average
-            else stats[3]++;                   // poor
+            if (point >= 8.0) stats[0]++;
+            else if (point >= 6.0) stats[1]++;
+            else if (point >= 4.0) stats[2]++;
+            else stats[3]++;
         }
     }
 
     private ReportResponse createReportResponse(String subject, int[] stats) {
         return ReportResponse.builder()
                 .subject(subject)
-                .lv4(stats[0])  // excellent
-                .lv3(stats[1])  // good
-                .lv2(stats[2])  // average
-                .lv1(stats[3])  // poor
+                .lv4(stats[0]) // excellent
+                .lv3(stats[1]) // good
+                .lv2(stats[2]) // average
+                .lv1(stats[3]) // poor
                 .total(stats[4])
                 .build();
     }
 
     @Cacheable(value = "topStudentsCache", key = "'topKhoiA'")
+    @Transactional(readOnly = true)
     public List<TOP10AResponse> getTop10KhoiA() {
-        long startTime = System.currentTimeMillis();
+        PriorityQueue<TOP10AResponse> topHeap = new PriorityQueue<>(10, Comparator.comparing(TOP10AResponse::getTongDiem));
 
-        List<Score> allScores = getAllScoresFromCache();
+        try (Stream<Score> stream = scoreRepository.streamAllScores()) {
+            stream.filter(this::hasValidKhoiAScores).forEach(score -> {
+                TOP10AResponse student = calculateKhoiAScore(score);
 
-        List<TOP10AResponse> topStudents = allScores.stream()
-                .filter(this::hasValidKhoiAScores)  // Lọc học sinh có đủ điểm 3 môn
-                .map(this::calculateKhoiAScore)     // Tính tổng điểm khối A
-                .sorted((s1, s2) -> s2.getTongDiem().compareTo(s1.getTongDiem())) // Sắp xếp giảm dần
-                .limit(10)                          // Lấy TOP 10
-                .collect(Collectors.toList());
-
-        // Gán thứ hạng
-        for (int i = 0; i < topStudents.size(); i++) {
-            topStudents.get(i).setRank(i + 1);
+                if (topHeap.size() < 10) {
+                    topHeap.offer(student);
+                } else if (student.getTongDiem().compareTo(topHeap.peek().getTongDiem()) > 0) {
+                    topHeap.poll();
+                    topHeap.offer(student);
+                }
+            });
         }
 
-        long endTime = System.currentTimeMillis();
-        return topStudents;
+        // Sắp xếp lại giảm dần để set rank
+        List<TOP10AResponse> sorted = new ArrayList<>(topHeap);
+        sorted.sort((s1, s2) -> s2.getTongDiem().compareTo(s1.getTongDiem()));
+
+        for (int i = 0; i < sorted.size(); i++) {
+            sorted.get(i).setRank(i + 1);
+        }
+
+        return sorted;
     }
+
 
     private boolean hasValidKhoiAScores(Score score) {
         return score.getToan() != null &&

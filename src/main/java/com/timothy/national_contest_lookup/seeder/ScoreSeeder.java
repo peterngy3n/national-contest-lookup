@@ -10,8 +10,9 @@ import lombok.experimental.FieldDefaults;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.stereotype.Component;
 
-import java.io.FileReader;
+import java.io.*;
 import java.math.BigDecimal;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -23,51 +24,64 @@ public class ScoreSeeder implements CommandLineRunner {
 
     @Override
     public void run(String... args) throws Exception {
-        String csvPath = "src/main/resources/storage/diem_thi_thpt_2024.csv"; // đường dẫn file CSV
         int batchSize = 1000;
 
-        if(scoreRepository.count() != 0)
+        // Nếu đã có dữ liệu thì không cần import
+        if (scoreRepository.count() != 0)
             return;
 
-        try (CSVReader reader = new CSVReaderBuilder(new FileReader(csvPath))
-                .withSkipLines(1) // Bỏ qua header
-                .build()) {
+        // Đọc file CSV từ classpath (bên trong .jar)
+        try (InputStream inputStream = getClass().getClassLoader()
+                .getResourceAsStream("storage/diem_thi_thpt_2024.csv")) {
 
-            String[] line;
-            List<Score> batch = new ArrayList<>();
-            int count = 0;
+            if (inputStream == null) {
+                throw new FileNotFoundException("Không tìm thấy file diem_thi_thpt_2024.csv trong classpath.");
+            }
 
-            while ((line = reader.readNext()) != null) {
-                Score score = new Score();
+            try (CSVReader reader = new CSVReaderBuilder(new InputStreamReader(inputStream, StandardCharsets.UTF_8))
+                    .withSkipLines(1) // Bỏ qua dòng tiêu đề
+                    .build()) {
 
-                score.setSbd(line[0]);
-                score.setToan(toDecimal(line[1]));
-                score.setNguVan(toDecimal(line[2]));
-                score.setNgoaiNgu(toDecimal(line[3]));
-                score.setVatLi(toDecimal(line[4]));
-                score.setHoaHoc(toDecimal(line[5]));
-                score.setSinhHoc(toDecimal(line[6]));
-                score.setLichSu(toDecimal(line[7]));
-                score.setDiaLi(toDecimal(line[8]));
-                score.setGdcd(toDecimal(line[9]));
-                score.setMaNgoaiNgu(line.length > 10 ? line[10] : null);
+                String[] line;
+                List<Score> batch = new ArrayList<>();
+                int count = 0;
 
-                batch.add(score);
+                while ((line = reader.readNext()) != null) {
+                    Score score = new Score();
 
-                if (batch.size() >= batchSize) {
+                    score.setSbd(line[0]);
+                    score.setToan(toDecimal(line[1]));
+                    score.setNguVan(toDecimal(line[2]));
+                    score.setNgoaiNgu(toDecimal(line[3]));
+                    score.setVatLi(toDecimal(line[4]));
+                    score.setHoaHoc(toDecimal(line[5]));
+                    score.setSinhHoc(toDecimal(line[6]));
+                    score.setLichSu(toDecimal(line[7]));
+                    score.setDiaLi(toDecimal(line[8]));
+                    score.setGdcd(toDecimal(line[9]));
+                    score.setMaNgoaiNgu(line.length > 10 ? line[10] : null);
+
+                    batch.add(score);
+
+                    if (batch.size() >= batchSize) {
+                        scoreRepository.saveAll(batch);
+                        count += batch.size();
+                        System.out.println("Đã import: " + count + " bản ghi");
+                        batch.clear();
+                    }
+                }
+
+                // insert phần còn lại nếu có
+                if (!batch.isEmpty()) {
                     scoreRepository.saveAll(batch);
                     count += batch.size();
-                    System.out.println("Đã import: " + count + " bản ghi");
-                    batch.clear();
+                    System.out.println("Đã import xong tổng cộng: " + count + " bản ghi.");
                 }
             }
 
-            // insert phần còn lại
-            if (!batch.isEmpty()) {
-                scoreRepository.saveAll(batch);
-                count += batch.size();
-                System.out.println("Đã import xong tổng cộng: " + count + " bản ghi.");
-            }
+        } catch (IOException e) {
+            System.err.println("Lỗi khi đọc hoặc import file CSV: " + e.getMessage());
+            e.printStackTrace();
         }
     }
 
