@@ -36,6 +36,7 @@ national-contest-lookup/
 │   ├── dto/               # Data Transfer Objects
 │   ├── mapper/            # Object Mapping
 │   ├── config/            # Configuration Classes
+│   ├── seeder/            # Seeder Classes
 │   └── exception/         # Exception Handling
 ├── src/main/resources/
 │   ├── db/migration/      # Flyway SQL Scripts
@@ -68,7 +69,9 @@ cd national-contest-lookup
 docker-compose up --build
 ```
 
-### Environment Variables
+**Lưu ý: SAU KHI CHẠY LỆNH DOCKER, 2 CONTAINER CỦA DATABASE VÀ SPRING SẼ ĐƯỢC TẠO, ĐỒNG THỜI DATA TỪ FILE CSV SẼ ĐƯỢC IMPORT VÀO MYSQL**
+
+### Environment Variables (Nếu chạy local không cần tạo file .env vì code đã thiết lập sẵn các giá trị mặc định)
 
 | Variable | Default | Description |
 |----------|---------|-------------|
@@ -101,7 +104,7 @@ JPA_DDL_AUTO=update
 LOG_LEVEL=INFO
 ```
 
-## 🔄 Database Migration
+## 🔄 Database Migration & Seeder
 
 Project sử dụng **Flyway** để quản lý database schema:
 
