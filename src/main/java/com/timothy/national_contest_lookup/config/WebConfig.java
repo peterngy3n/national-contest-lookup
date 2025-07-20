@@ -14,7 +14,7 @@ public class WebConfig {
             @Override
             public void addCorsMappings(CorsRegistry registry) {
                 registry.addMapping("/**") // Cho tất cả endpoint
-                        .allowedOrigins("https://national-contest-lookup-frontend.vercel.app/") // Đổi thành frontend của bạn
+                        .allowedOrigins("https://national-contest-lookup-frontend.vercel.app") // Đổi thành frontend của bạn
                         .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS")
                         .allowedHeaders("*")
                         .allowCredentials(true);
