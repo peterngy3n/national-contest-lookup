@@ -10,6 +10,8 @@ import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.cache.annotation.Cacheable;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -95,49 +97,45 @@ public class ReportService {
 //                .build();
 //    }
 
-    @Cacheable(value = "allReportsCache", key = "'allReports'")
-    @Transactional(readOnly = true)
-    public List<ReportResponse> getAllSubjectsReport() {
-        log.info("In report service");
-        int[] toanStats = new int[5];
-        int[] nguvanStats = new int[5];
-        int[] ngoainguStats = new int[5];
-        int[] vatliStats = new int[5];
-        int[] hoahocStats = new int[5];
-        int[] sinhhocStats = new int[5];
-        int[] lichsuStats = new int[5];
-        int[] dialiStats = new int[5];
-        int[] gdcdStats = new int[5];
+    @Cacheable(value = "allReportsCache", key = "#subject")
+    public ReportResponse getAllSubjectsReport(String subject) {
+        List<Object[]> result;
 
-        try (Stream<Score> stream = scoreRepository.streamAllScores()) {
-            stream.forEach(score -> {
-                processSubjectScore(score.getToan(), toanStats);
-                processSubjectScore(score.getNguVan(), nguvanStats);
-                processSubjectScore(score.getNgoaiNgu(), ngoainguStats);
-                processSubjectScore(score.getVatLi(), vatliStats);
-                processSubjectScore(score.getHoaHoc(), hoahocStats);
-                processSubjectScore(score.getSinhHoc(), sinhhocStats);
-                processSubjectScore(score.getLichSu(), lichsuStats);
-                processSubjectScore(score.getDiaLi(), dialiStats);
-                processSubjectScore(score.getGdcd(), gdcdStats);
-            });
+        switch (subject.toLowerCase()) {
+            case "toan" -> result = scoreRepository.reportToan();
+            case "vatli" -> result = scoreRepository.reportVatLi();
+            case "hoahoc" -> result = scoreRepository.reportHoaHoc();
+            case "nguvan" -> result = scoreRepository.reportNguVan();
+            case "ngoainingu" -> result = scoreRepository.reportNgoaiNgu();
+            case "sinhhoc" -> result = scoreRepository.reportSinhHoc();
+            case "lichsu" -> result = scoreRepository.reportLichSu();
+            case "diali" -> result = scoreRepository.reportDiaLi();
+            case "gdcd" -> result = scoreRepository.reportGdcd();
+            default -> throw new IllegalArgumentException("Môn học không hợp lệ: " + subject);
         }
 
-        log.info("Processed in report service");
+        Object[] row = result.get(0);
+        int lv1 = ((Number) row[0]).intValue();
+        int lv2 = ((Number) row[1]).intValue();
+        int lv3 = ((Number) row[2]).intValue();
+        int lv4 = ((Number) row[3]).intValue();
 
-
-        return Arrays.asList(
-                createReportResponse("toan", toanStats),
-                createReportResponse("nguvan", nguvanStats),
-                createReportResponse("ngoaingu", ngoainguStats),
-                createReportResponse("vatli", vatliStats),
-                createReportResponse("hoahoc", hoahocStats),
-                createReportResponse("sinhhoc", sinhhocStats),
-                createReportResponse("lichsu", lichsuStats),
-                createReportResponse("diali", dialiStats),
-                createReportResponse("gdcd", gdcdStats)
-        );
+        return new ReportResponse(subject, lv1, lv2, lv3, lv4, lv1 + lv2 + lv3 + lv4);
     }
+
+
+    private ReportResponse build(String subject, Object result) {
+        Object[] row = (Object[]) result;
+
+        Integer lv1 = ((Number) row[0]).intValue();
+        Integer lv2 = ((Number) row[1]).intValue();
+        Integer lv3 = ((Number) row[2]).intValue();
+        Integer lv4 = ((Number) row[3]).intValue();
+        Integer total = lv1 + lv2 + lv3 + lv4;
+
+        return new ReportResponse(subject, lv1, lv2, lv3, lv4, total);
+    }
+
 
     private void processSubjectScore(BigDecimal subjectScore, int[] stats) {
         if (subjectScore != null) {
@@ -162,32 +160,42 @@ public class ReportService {
     }
 
     @Cacheable(value = "topStudentsCache", key = "'topKhoiA'")
-    @Transactional(readOnly = true)
     public List<TOP10AResponse> getTop10KhoiA() {
-        PriorityQueue<TOP10AResponse> topHeap = new PriorityQueue<>(10, Comparator.comparing(TOP10AResponse::getTongDiem));
+//        PriorityQueue<TOP10AResponse> topHeap = new PriorityQueue<>(10, Comparator.comparing(TOP10AResponse::getTongDiem));
+//
+//        try (Stream<Score> stream = scoreRepository.streamAllScores()) {
+//            stream.filter(this::hasValidKhoiAScores).forEach(score -> {
+//                TOP10AResponse student = calculateKhoiAScore(score);
+//
+//                if (topHeap.size() < 10) {
+//                    topHeap.offer(student);
+//                } else if (student.getTongDiem().compareTo(topHeap.peek().getTongDiem()) > 0) {
+//                    topHeap.poll();
+//                    topHeap.offer(student);
+//                }
+//            });
+//        }
+//
+//        // Sắp xếp lại giảm dần để set rank
+//        List<TOP10AResponse> sorted = new ArrayList<>(topHeap);
+//        sorted.sort((s1, s2) -> s2.getTongDiem().compareTo(s1.getTongDiem()));
+//
+//        for (int i = 0; i < sorted.size(); i++) {
+//            sorted.get(i).setRank(i + 1);
+//        }
+//
+//        return sorted;
+        List<TOP10AResponse> all = scoreRepository.findTopBlockA().stream()
+                .sorted((a, b) -> b.getBlockAScore().compareTo(a.getBlockAScore()))
+                .limit(10)
+                .toList();
 
-        try (Stream<Score> stream = scoreRepository.streamAllScores()) {
-            stream.filter(this::hasValidKhoiAScores).forEach(score -> {
-                TOP10AResponse student = calculateKhoiAScore(score);
-
-                if (topHeap.size() < 10) {
-                    topHeap.offer(student);
-                } else if (student.getTongDiem().compareTo(topHeap.peek().getTongDiem()) > 0) {
-                    topHeap.poll();
-                    topHeap.offer(student);
-                }
-            });
+        int rank = 1;
+        for (TOP10AResponse student : all) {
+            student.setRank(rank++);
         }
 
-        // Sắp xếp lại giảm dần để set rank
-        List<TOP10AResponse> sorted = new ArrayList<>(topHeap);
-        sorted.sort((s1, s2) -> s2.getTongDiem().compareTo(s1.getTongDiem()));
-
-        for (int i = 0; i < sorted.size(); i++) {
-            sorted.get(i).setRank(i + 1);
-        }
-
-        return sorted;
+        return all;
     }
 
 

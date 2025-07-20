@@ -17,4 +17,24 @@ public class TOP10AResponse {
     BigDecimal hoaHoc;    // Điểm Hóa học
     BigDecimal tongDiem;  // Tổng điểm khối A
     Integer rank;         // Thứ hạng
+
+    public TOP10AResponse(String sbd, BigDecimal toan, BigDecimal vatLi, BigDecimal hoaHoc) {
+        this.sbd = sbd;
+        this.toan = toan;
+        this.vatLi = vatLi;
+        this.hoaHoc = hoaHoc;
+        this.tongDiem = sum(toan, vatLi, hoaHoc);
+    }
+
+    private BigDecimal sum(BigDecimal a, BigDecimal b, BigDecimal c) {
+        return nonNull(a).add(nonNull(b)).add(nonNull(c));
+    }
+
+    private BigDecimal nonNull(BigDecimal val) {
+        return val != null ? val : BigDecimal.ZERO;
+    }
+
+    public BigDecimal getBlockAScore() {
+        return getTongDiem();
+    }
 }

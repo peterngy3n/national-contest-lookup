@@ -38,14 +38,14 @@ public class ScoreService {
 
 
 
-    public ReportResponse getReportBySubject(String subject) {
-        log.info("In score service");
-        List<ReportResponse> allReports = reportService.getAllSubjectsReport();
-        return allReports.stream()
-                .filter(report -> report.getSubject().equals(subject.toLowerCase()))
-                .findFirst()
-                .orElseThrow(() -> new CustomException(ErrorCode.STUDENT_NOT_FOUND));
-    }
+//    public ReportResponse getReportBySubject(String subject) {
+//        log.info("In score service");
+//        List<ReportResponse> allReports = reportService.getAllSubjectsReport();
+//        return allReports.stream()
+//                .filter(report -> report.getSubject().equals(subject.toLowerCase()))
+//                .findFirst()
+//                .orElseThrow(() -> new CustomException(ErrorCode.STUDENT_NOT_FOUND));
+//    }
 
     // Method tối ưu - chỉ 4 phép so sánh
 

@@ -36,7 +36,7 @@ public class ScoreController {
     @GetMapping("/report/{subject}")
     ApiResponse<ReportResponse>getReport (@PathVariable("subject") String subject) {
         return ApiResponse.<ReportResponse>builder()
-                .result(scoreService.getReportBySubject(subject)).build();
+                .result(reportService.getAllSubjectsReport(subject)).build();
     }
 
     @GetMapping("/report/top10")

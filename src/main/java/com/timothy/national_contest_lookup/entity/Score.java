@@ -66,4 +66,6 @@ public class Score {
     protected void onUpdate() {
         updatedAt = LocalDateTime.now();
     }
+
+
 }

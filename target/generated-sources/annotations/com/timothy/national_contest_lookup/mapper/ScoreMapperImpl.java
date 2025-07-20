@@ -7,8 +7,8 @@ import org.springframework.stereotype.Component;
 
 @Generated(
     value = "org.mapstruct.ap.MappingProcessor",
-    date = "2025-07-20T21:22:00+0700",
-    comments = "version: 1.6.3, compiler: javac, environment: Java 23 (Oracle Corporation)"
+    date = "2025-07-20T23:49:21+0700",
+    comments = "version: 1.6.3, compiler: Eclipse JDT (IDE) 3.42.50.v20250628-1110, environment: Java 21.0.7 (Eclipse Adoptium)"
 )
 @Component
 public class ScoreMapperImpl implements ScoreMapper {
@@ -21,17 +21,17 @@ public class ScoreMapperImpl implements ScoreMapper {
 
         ScoreResponse.ScoreResponseBuilder scoreResponse = ScoreResponse.builder();
 
-        scoreResponse.sbd( score.getSbd() );
-        scoreResponse.toan( score.getToan() );
-        scoreResponse.nguVan( score.getNguVan() );
-        scoreResponse.ngoaiNgu( score.getNgoaiNgu() );
-        scoreResponse.vatLi( score.getVatLi() );
-        scoreResponse.hoaHoc( score.getHoaHoc() );
-        scoreResponse.sinhHoc( score.getSinhHoc() );
-        scoreResponse.lichSu( score.getLichSu() );
         scoreResponse.diaLi( score.getDiaLi() );
         scoreResponse.gdcd( score.getGdcd() );
+        scoreResponse.hoaHoc( score.getHoaHoc() );
+        scoreResponse.lichSu( score.getLichSu() );
         scoreResponse.maNgoaiNgu( score.getMaNgoaiNgu() );
+        scoreResponse.ngoaiNgu( score.getNgoaiNgu() );
+        scoreResponse.nguVan( score.getNguVan() );
+        scoreResponse.sbd( score.getSbd() );
+        scoreResponse.sinhHoc( score.getSinhHoc() );
+        scoreResponse.toan( score.getToan() );
+        scoreResponse.vatLi( score.getVatLi() );
 
         return scoreResponse.build();
     }
